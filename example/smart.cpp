@@ -47,8 +47,8 @@ signed main() {
     cin >> test;
     if (test == 0) cerr << "CHANGE .IN FILE" << endl;
     for (int i = 1; i <= test; i++) {
-        constexpr int debug_len = 30;
-        cout << string(debug_len, '=') + " " << i << " " + string(debug_len, '=') << '\n';
+        const auto divider = string(30, '=');
+        cout << divider << ' ' << i << ' ' << divider << '\n';
         solve(cin, cout);
         cout << '\n';
     }
