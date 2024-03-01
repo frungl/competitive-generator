@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import shutil
+from getkey import getkey, keys
 
 real_path = os.path.dirname(__file__) + '/'
 default_smart = []
@@ -101,8 +102,9 @@ def delete_problem(problem_name, reset=False):
         print(f'Problem \'{problem_name}\' does not exist')
         exit(-1)
 
-    sure = input(f'Are you sure you want to {"reset" if reset else "delete"} \'{problem_name}\'? (y/n) ')
-    if sure != 'y':
+    print(f'Are you sure you want to {"reset" if reset else "delete"} \'{problem_name}\'? (y/n) ')
+    sure = getkey()
+    if sure != 'y' and sure != keys.ENTER:
         exit(0)
     shutil.rmtree(problem_name)
     delete_from_cmake(problem_name)
