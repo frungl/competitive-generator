@@ -15,20 +15,24 @@ default_config = []
 default_problem_cmake = []
 
 
-def init():
+def init(theme):
     global \
         default_smart, default_stupid, default_generator, \
         default_checker, default_stress, default_input, \
         default_config, default_problem_cmake
 
-    default_smart = open(real_path + 'example/smart.cpp', 'r').readlines()
-    default_stupid = open(real_path + 'example/stupid.cpp', 'r').readlines()
-    default_generator = open(real_path + 'example/generator.cpp', 'r').readlines()
-    default_checker = open(real_path + 'example/checker.cpp', 'r').readlines()
-    default_stress = open(real_path + 'example/stress.py', 'r').readlines()
-    default_input = open(real_path + 'example/input.in', 'r').readlines()
-    default_config = open(real_path + 'example/config.ini', 'r').readlines()
-    default_problem_cmake = open(real_path + 'example/problemCMakeLists.txt', 'r').readlines()
+    if os.path.exists(real_path + fr'example/{theme}') is False:
+        print(f'Theme \'{theme}\' does not exist')
+        exit(-1)
+
+    default_smart = open(real_path + fr'example/{theme}/smart.cpp', 'r').readlines()
+    default_stupid = open(real_path + fr'example/{theme}/stupid.cpp', 'r').readlines()
+    default_generator = open(real_path + fr'example/{theme}/generator.cpp', 'r').readlines()
+    default_checker = open(real_path + fr'example/{theme}/checker.cpp', 'r').readlines()
+    default_stress = open(real_path + fr'example/{theme}/stress.py', 'r').readlines()
+    default_input = open(real_path + fr'example/{theme}/input.in', 'r').readlines()
+    default_config = open(real_path + fr'example/{theme}/config.ini', 'r').readlines()
+    default_problem_cmake = open(real_path + fr'example/{theme}/problemCMakeLists.txt', 'r').readlines()
 
 
 def add_to_cmake(problem_name):
@@ -77,7 +81,7 @@ def init_problem(problem_name):
 ban_names = ['cmake-build-debug', 'venv', 'utils', 'CMakeLists.txt']
 
 
-def create_problem(problem_name, reset=False):
+def create_problem(problem_name, reset=False, theme='default'):
     if problem_name in ban_names:
         print(f'Problem name \'{problem_name}\' is banned')
         exit(-1)
@@ -86,7 +90,7 @@ def create_problem(problem_name, reset=False):
         print(f'Problem \'{problem_name}\' already exist')
         exit(-1)
 
-    init()
+    init(theme)
     init_problem(problem_name)
     add_to_cmake(problem_name)
     if not reset:
@@ -112,13 +116,13 @@ def delete_problem(problem_name, reset=False):
         print(f'Problem \'{problem_name}\' deleted successfully!')
 
 
-def reset_problem(problem_name):
+def reset_problem(problem_name, theme='default'):
     delete_problem(problem_name, reset=True)
-    create_problem(problem_name, reset=True)
+    create_problem(problem_name, reset=True, theme=theme)
     print(f'Problem \'{problem_name}\' reset successfully!')
 
 
-def gen_project(project_name, max_name):
+def gen_project(project_name, max_name, theme='default'):
     if os.path.exists('utils'):
         print('Project already exist')
         exit(-1)
@@ -131,29 +135,42 @@ def gen_project(project_name, max_name):
         exit(-1)
     if os.path.exists('main.cpp'):
         os.remove('main.cpp')
-    init()
+    init(theme)
     default_cmake = open(real_path + 'defaultCMakeLists.txt', 'r').readlines()
     default_cmake = [line.replace('PROJECT_NAME', project_name) for line in default_cmake]
     open('CMakeLists.txt', 'w').writelines(default_cmake)
-    create_problem('main')
+    create_problem('main', theme=theme)
     name = 'a'
     while name <= max_name:
-        create_problem(name)
+        create_problem(name, theme=theme)
         name = chr(ord(name) + 1)
     shutil.copytree(real_path + 'utils', 'utils')
     print(f'Project {project_name} created successfully!')
 
 
 def main():
-    flag = sys.argv[1]
-    if flag == '-r':
-        reset_problem(sys.argv[2])
-    elif flag == '-d':
-        delete_problem(sys.argv[2])
-    elif flag == '-c':
-        create_problem(sys.argv[2])
-    elif flag == '-g':
-        gen_project(sys.argv[2], (sys.argv[3] if len(sys.argv) > 3 else chr(0)))
+    theme = 'default'
+    pos = 1
+    flag = sys.argv[pos]
+    if flag == '-t' or flag == '--theme':
+        theme = sys.argv[pos + 1]
+        pos += 2
+    flag = sys.argv[pos]
+    if flag == '-r' or flag == '--reset':
+        reset_problem(sys.argv[pos + 1], theme=theme)
+        pos += 2
+    elif flag == '-d' or flag == '--delete':
+        delete_problem(sys.argv[pos + 1])
+        pos += 2
+    elif flag == '-c' or flag == '--create':
+        create_problem(sys.argv[pos + 1], theme=theme)
+        pos += 2
+    elif flag == '-g' or flag == '--gen':
+        gen_project(sys.argv[pos + 1], sys.argv[pos + 2], theme=theme)
+        pos += 3
+    else:
+        print('Unknown flag')
+        exit(-1)
 
 
 if __name__ == "__main__":
