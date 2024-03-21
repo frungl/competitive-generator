@@ -12,6 +12,12 @@ typedef long double ld;
 typedef pair<int, int> pii;
 typedef pair<ll, ll> pll;
 
+#ifdef LOCAL
+#include "debug.h"
+#else
+#define debug(...) 533
+#endif
+
 #define all(a) (a).begin(), (a).end()
 #define rall(a) (a).rbegin(), (a).rend()
 

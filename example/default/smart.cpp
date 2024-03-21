@@ -14,14 +14,11 @@ typedef long double ld;
 typedef pair<int, int> pii;
 typedef pair<ll, ll> pll;
 
-void print_(const string &x) { cerr << '"' << x << '"'; }
-void print_(const auto &x) { cerr << x; }
-void print_(const pair<auto, auto> &x) { cerr << "{"; print_(x.first); cerr << ", "; print_(x.second); cerr << "}"; }
-template <typename T> concept Iterable = requires(T a) { begin(a); end(a); };
-void print_(Iterable auto const &x) { cerr << "{"; for (int f = 0; auto _val : x) { cerr << (f++ ? ", " : ""); print_(_val); } cerr << "}"; }
-void debug_() { cerr << "]\n"; }
-void debug_(const auto &t, auto... v) {print_(t); if (sizeof...(v)) cerr << ", "; debug_(v...);}
-#define debug(x...) cerr << __LINE__ << ": " <<  "[" << #x << "] = ["; debug_(x)
+#ifdef LOCAL
+#include "debug.h"
+#else
+#define debug(...) 533
+#endif
 
 #define all(a) (a).begin(), (a).end()
 #define rall(a) (a).rbegin(), (a).rend()

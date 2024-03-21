@@ -205,7 +205,7 @@ def run_checker(smart_ans, stupid_ans, result_file, error_file):
     )
 
 
-divider_width = 100
+divider_width = min(shutil.get_terminal_size().columns, 60)
 global_divider = '=' * divider_width
 local_divider = '-' * divider_width
 

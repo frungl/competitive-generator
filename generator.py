@@ -5,6 +5,7 @@ import shutil
 from getkey import getkey, keys
 
 real_path = os.path.dirname(__file__) + '/'
+default_debug = []
 default_smart = []
 default_stupid = []
 default_generator = []
@@ -17,14 +18,15 @@ default_problem_cmake = []
 
 def init(theme):
     global \
-        default_smart, default_stupid, default_generator, \
-        default_checker, default_stress, default_input, \
-        default_config, default_problem_cmake
+        default_debug, default_smart, default_stupid, \
+        default_generator, default_checker, default_stress, \
+        default_input, default_config, default_problem_cmake
 
     if os.path.exists(real_path + fr'example/{theme}') is False:
         print(f'Theme \'{theme}\' does not exist')
         exit(-1)
 
+    default_debug = open(real_path + fr'example/{theme}/debug.h', 'r').readlines()
     default_smart = open(real_path + fr'example/{theme}/smart.cpp', 'r').readlines()
     default_stupid = open(real_path + fr'example/{theme}/stupid.cpp', 'r').readlines()
     default_generator = open(real_path + fr'example/{theme}/generator.cpp', 'r').readlines()
@@ -68,6 +70,7 @@ def init_problem(problem_name):
     now_stress = [line.replace('PROBLEM_NAME', problem_name) for line in now_stress]
     now_config = [line.replace('PROBLEM_NAME', problem_name) for line in now_config]
     now_problem_cmake = [line.replace('PROBLEM_NAME', problem_name) for line in now_problem_cmake]
+    open(fr'{problem_name}/debug.h', 'w').writelines(default_debug)
     open(fr'{problem_name}/{problem_name}.cpp', 'w').writelines(now_smart)
     open(fr'{problem_name}/{problem_name}-stupid.cpp', 'w').writelines(now_stupid)
     open(fr'{problem_name}/{problem_name}-generator.cpp', 'w').writelines(now_generator)
@@ -78,7 +81,7 @@ def init_problem(problem_name):
     open(fr'{problem_name}/CMakeLists.txt', 'w').writelines(now_problem_cmake)
 
 
-ban_names = ['cmake-build-debug', 'venv', 'utils', 'CMakeLists.txt']
+ban_names = ['cmake-build-debug', '.idea', '.venv', 'utils', 'CMakeLists.txt']
 
 
 def create_problem(problem_name, reset=False, theme='default'):
@@ -127,8 +130,12 @@ def gen_project(project_name, max_name, theme='default'):
         print('Project already exist')
         exit(-1)
 
-    if re.fullmatch(f'\d+', max_name) and 1 <= int(max_name) <= 26:
-        max_name = chr(ord('a') + int(max_name) - 1)
+    if re.fullmatch(f'\d+', max_name) and 0 <= int(max_name) <= 26:
+        match max_name:
+            case '0':
+                max_name = chr(0)
+            case _:
+                max_name = chr(ord('a') + int(max_name) - 1)
 
     if not re.fullmatch(f'^[a-z]|{chr(0)}', max_name):
         print("Not a-z symbol or 0-26 number")
