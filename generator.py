@@ -130,14 +130,14 @@ def gen_project(project_name, max_name, theme='default'):
         print('Project already exist')
         exit(-1)
 
-    if re.fullmatch(f'\d+', max_name) and 0 <= int(max_name) <= 26:
+    if re.fullmatch(r'\d+', max_name) and 0 <= int(max_name) <= 26:
         match max_name:
             case '0':
                 max_name = chr(0)
             case _:
                 max_name = chr(ord('a') + int(max_name) - 1)
 
-    if not re.fullmatch(f'^[a-z]|{chr(0)}', max_name):
+    if not re.fullmatch(rf'^[a-z]|{chr(0)}', max_name):
         print("Not a-z symbol or 0-26 number")
         exit(-1)
     if os.path.exists('main.cpp'):
