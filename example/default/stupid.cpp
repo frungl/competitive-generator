@@ -11,17 +11,6 @@ typedef unsigned int uint;
 typedef long long ll;
 typedef unsigned long long ull;
 typedef long double ld;
-typedef pair<int, int> pii;
-typedef pair<ll, ll> pll;
-
-#ifdef LOCAL
-#include "debug.h"
-#else
-#define debug(...) 533
-#endif
-
-#define all(a) (a).begin(), (a).end()
-#define rall(a) (a).rbegin(), (a).rend()
 
 template <typename T> using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
 template <typename K, typename V> using ordered_map = tree<K, V, less<K>, rb_tree_tag, tree_order_statistics_node_update>;
@@ -43,7 +32,7 @@ signed main() {
     ifstream cin("../../PROBLEM_NAME/PROBLEM_NAME.in"); // ofstream cout("../../PROBLEM_NAME/PROBLEM_NAME.out");
     cin >> test;
     if (test == 0) cerr << "CHANGE .IN FILE" << endl;
-    for (int i = 1; i <= test; i++) {
+    for (const auto i: v::iota(1) | v::take(test)) {
         const auto divider = string(30, '=');
         cout << divider << ' ' << i << ' ' << divider << '\n';
         solve(cin, cout);
@@ -52,7 +41,7 @@ signed main() {
 #else
     // ifstream cin(".in"); ofstream cout(".out");
     // cin >> test;
-    while (test--) {
+    for (const auto _: v::iota(0, test)) {
         solve(cin, cout);
     }
 #endif

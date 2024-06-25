@@ -16,7 +16,7 @@ namespace cp_debug {
         cout << '\'' << x << '\'';
     }
 
-    void print(const auto &x) {
+    void print(const auto &x) {LOCAL
         cout << x;
     }
 
