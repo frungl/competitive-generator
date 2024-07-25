@@ -8,6 +8,10 @@ namespace cp_debug {
         cout << '"' << x << '"';
     }
 
+    inline void print(const string_view &x) {
+        cout << '"' << x << '"';
+    }
+
     inline void print(const char *x) {
         cout << '"' << x << '"';
     }
