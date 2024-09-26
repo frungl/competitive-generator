@@ -8,6 +8,7 @@ real_path = os.path.dirname(__file__) + '/'
 default_debug = []
 default_smart = []
 default_stupid = []
+default_grader = []
 default_generator = []
 default_checker = []
 default_stress = []
@@ -18,7 +19,7 @@ default_problem_cmake = []
 
 def init(theme):
     global \
-        default_debug, default_smart, default_stupid, \
+        default_debug, default_smart, default_stupid, default_grader, \
         default_generator, default_checker, default_stress, \
         default_input, default_config, default_problem_cmake
 
@@ -28,6 +29,8 @@ def init(theme):
 
     default_debug = open(real_path + fr'example/{theme}/debug.h', 'r').readlines()
     default_smart = open(real_path + fr'example/{theme}/smart.cpp', 'r').readlines()
+    if theme == 'grader':
+        default_grader = open(real_path + fr'example/{theme}/main.cpp', 'r').readlines()
     default_stupid = open(real_path + fr'example/{theme}/stupid.cpp', 'r').readlines()
     default_generator = open(real_path + fr'example/{theme}/generator.cpp', 'r').readlines()
     default_checker = open(real_path + fr'example/{theme}/checker.cpp', 'r').readlines()
@@ -58,6 +61,7 @@ def delete_from_cmake(problem_name):
 def init_problem(problem_name):
     now_smart = default_smart.copy()
     now_stupid = default_stupid.copy()
+    now_grader = default_grader.copy()
     now_generator = default_generator.copy()
     now_checker = default_checker.copy()
     now_stress = default_stress.copy()
@@ -67,12 +71,15 @@ def init_problem(problem_name):
     os.mkdir(problem_name)
     now_smart = [line.replace('PROBLEM_NAME', problem_name) for line in now_smart]
     now_stupid = [line.replace('PROBLEM_NAME', problem_name) for line in now_stupid]
+    now_grader = [line.replace('PROBLEM_NAME', problem_name) for line in now_grader]
     now_stress = [line.replace('PROBLEM_NAME', problem_name) for line in now_stress]
     now_config = [line.replace('PROBLEM_NAME', problem_name) for line in now_config]
     now_problem_cmake = [line.replace('PROBLEM_NAME', problem_name) for line in now_problem_cmake]
     open(fr'{problem_name}/debug.h', 'w').writelines(default_debug)
     open(fr'{problem_name}/{problem_name}.cpp', 'w').writelines(now_smart)
     open(fr'{problem_name}/{problem_name}-stupid.cpp', 'w').writelines(now_stupid)
+    if now_grader:
+        open(fr'{problem_name}/{problem_name}-main.cpp', 'w').writelines(now_grader)
     open(fr'{problem_name}/{problem_name}-generator.cpp', 'w').writelines(now_generator)
     open(fr'{problem_name}/{problem_name}-checker.cpp', 'w').writelines(now_checker)
     open(fr'{problem_name}/{problem_name}-stress.py', 'w').writelines(now_stress)

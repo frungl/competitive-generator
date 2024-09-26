@@ -22,6 +22,7 @@ from utils.config import (
 
 SMART = ''
 STUPID = ''
+GRADER = ''
 CHECKER = ''
 GENERATOR = ''
 CPP_STANDARD = ''
@@ -48,7 +49,7 @@ def validate_file(file_path):
 
 
 def read_config(config_file):
-    global SMART, STUPID, CHECKER, GENERATOR, CPP_STANDARD, COUNT, STEP
+    global SMART, STUPID, GRADER, CHECKER, GENERATOR, CPP_STANDARD, COUNT, STEP
     config = configparser.ConfigParser()
     config.read(config_file)
     for key in config['STRESS']:
@@ -58,6 +59,8 @@ def read_config(config_file):
                 SMART = value
             case 'stupid':
                 STUPID = value
+            case 'grader':
+                GRADER = value
             case 'checker':
                 if value in cfg.checkers:
                     CHECKER = f'../utils/checkers/{value}'
@@ -74,6 +77,8 @@ def read_config(config_file):
 
     validate_file(GENERATOR)
     validate_file(SMART)
+    if GRADER != '':
+        validate_file(GRADER)
     validate_file(STUPID)
     validate_file(CHECKER)
 
@@ -87,22 +92,22 @@ def need_update(file_path, exe_path):
     return file_time > exe_time
 
 
-def do_cpp(cpp_std, file_path, exe_path):
-    os.system(f'g++ -std=c++{cpp_std} -O2 {file_path} -o {exe_path}')
+def do_cpp(cpp_std, file_path, grader_path, exe_path):
+    os.system(f'g++ -std=c++{cpp_std} -O2 {file_path} {grader_path} -o {exe_path}')
 
 
-def prepare_cpp(cpp_std, file_path, exe_path):
+def prepare_cpp(cpp_std, file_path, grader_path, exe_path):
     exe_path = TEMP_PATH + exe_path
     validate_path(file_path)
 
     if not os.path.exists(exe_path):
         print(f'Compile : {file_path}')
-        do_cpp(cpp_std, file_path, exe_path)
+        do_cpp(cpp_std, file_path, grader_path, exe_path)
         return
 
     if need_update(file_path, exe_path):
         print(f'Recompile : {file_path}')
-        do_cpp(cpp_std, file_path, exe_path)
+        do_cpp(cpp_std, file_path, grader_path, exe_path)
 
 
 def do_python(file_path, exe_path):
@@ -123,9 +128,9 @@ def prepare_python(file_path, exe_path):
         shutil.copyfile(file_path, exe_path)
 
 
-def prepare_runnable(file_path, exe_path):
+def prepare_runnable(file_path, grader_path, exe_path):
     if file_path.endswith('.cpp'):
-        prepare_cpp(CPP_STANDARD, file_path, exe_path)
+        prepare_cpp(CPP_STANDARD, file_path, grader_path, exe_path)
     elif file_path.endswith('.py'):
         prepare_python(file_path, exe_path)
 
@@ -137,10 +142,10 @@ def prepare(config_file):
         os.mkdir(SAVE_TEST_PATH)
     read_config(config_file)
 
-    prepare_runnable(CHECKER, 'checker')
-    prepare_runnable(GENERATOR, 'generator')
-    prepare_runnable(SMART, 'smart')
-    prepare_runnable(STUPID, 'stupid')
+    prepare_runnable(CHECKER, '', 'checker')
+    prepare_runnable(GENERATOR, '', 'generator')
+    prepare_runnable(SMART, GRADER, 'smart')
+    prepare_runnable(STUPID, GRADER, 'stupid')
 
 
 def get_executable(exe_path):
