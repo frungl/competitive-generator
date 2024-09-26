@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 add_executable(PROBLEM_NAME PROBLEM_NAME.cpp debug.h)
 add_executable(PROBLEM_NAME-stupid PROBLEM_NAME-stupid.cpp debug.h)
