@@ -23,21 +23,21 @@ def init(theme):
         default_generator, default_checker, default_stress, \
         default_input, default_config, default_problem_cmake
 
-    if os.path.exists(real_path + fr'example/{theme}') is False:
+    if os.path.exists(real_path + fr'themes/{theme}') is False:
         print(f'Theme \'{theme}\' does not exist')
         exit(-1)
 
-    default_debug = open(real_path + fr'example/{theme}/debug.h', 'r').readlines()
-    default_smart = open(real_path + fr'example/{theme}/smart.cpp', 'r').readlines()
+    default_debug = open(real_path + fr'themes/{theme}/debug.h', 'r').readlines()
+    default_smart = open(real_path + fr'themes/{theme}/smart.cpp', 'r').readlines()
     if theme == 'grader':
-        default_grader = open(real_path + fr'example/{theme}/main.cpp', 'r').readlines()
-    default_stupid = open(real_path + fr'example/{theme}/stupid.cpp', 'r').readlines()
-    default_generator = open(real_path + fr'example/{theme}/generator.cpp', 'r').readlines()
-    default_checker = open(real_path + fr'example/{theme}/checker.cpp', 'r').readlines()
-    default_stress = open(real_path + fr'example/{theme}/stress.py', 'r').readlines()
-    default_input = open(real_path + fr'example/{theme}/input.in', 'r').readlines()
-    default_config = open(real_path + fr'example/{theme}/config.ini', 'r').readlines()
-    default_problem_cmake = open(real_path + fr'example/{theme}/problemCMakeLists.txt', 'r').readlines()
+        default_grader = open(real_path + fr'themes/{theme}/main.cpp', 'r').readlines()
+    default_stupid = open(real_path + fr'themes/{theme}/stupid.cpp', 'r').readlines()
+    default_generator = open(real_path + fr'themes/{theme}/generator.cpp', 'r').readlines()
+    default_checker = open(real_path + fr'themes/{theme}/checker.cpp', 'r').readlines()
+    default_stress = open(real_path + fr'themes/{theme}/stress.py', 'r').readlines()
+    default_input = open(real_path + fr'themes/{theme}/input.in', 'r').readlines()
+    default_config = open(real_path + fr'themes/{theme}/config.ini', 'r').readlines()
+    default_problem_cmake = open(real_path + fr'themes/{theme}/problemCMakeLists.txt', 'r').readlines()
 
 
 def add_to_cmake(problem_name):
@@ -150,7 +150,7 @@ def gen_project(project_name, max_name, theme='default'):
     if os.path.exists('main.cpp'):
         os.remove('main.cpp')
     init(theme)
-    default_cmake = open(real_path + 'defaultCMakeLists.txt', 'r').readlines()
+    default_cmake = open(real_path + 'themes/defaultCMakeLists.txt', 'r').readlines()
     default_cmake = [line.replace('PROJECT_NAME', project_name) for line in default_cmake]
     open('CMakeLists.txt', 'w').writelines(default_cmake)
     create_problem('main', theme=theme)
