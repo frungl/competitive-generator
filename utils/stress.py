@@ -1,9 +1,12 @@
-import os
-import sys
-import datetime
 import configparser
+import datetime
+import os
 import shutil
+import sys
+import threading
 import timeit
+from collections.abc import generator
+from multiprocessing import Value
 
 from utils import config as cfg
 from utils.config import (
@@ -26,12 +29,19 @@ GRADER = ''
 CHECKER = ''
 GENERATOR = ''
 CPP_STANDARD = ''
+THREADS = 0
 COUNT = 0
 STEP = 0
 
+print_lock = threading.Lock()
+
+def atomic_print(*args, **kwargs):
+    with print_lock:
+        print(*args, **kwargs)
+
 
 def error(message):
-    print(message, file=sys.stderr)
+    atomic_print(message, file=sys.stderr)
     sys.exit(1)
 
 
@@ -49,7 +59,7 @@ def validate_file(file_path):
 
 
 def read_config(config_file):
-    global SMART, STUPID, GRADER, CHECKER, GENERATOR, CPP_STANDARD, COUNT, STEP
+    global SMART, STUPID, GRADER, CHECKER, GENERATOR, CPP_STANDARD, THREADS, COUNT, STEP
     config = configparser.ConfigParser()
     config.read(config_file)
     for key in config['STRESS']:
@@ -70,6 +80,8 @@ def read_config(config_file):
                 GENERATOR = value
             case 'cpp_standard':
                 CPP_STANDARD = value
+            case 'threads':
+                THREADS = int(value)
             case 'count':
                 COUNT = int(value)
             case 'step':
@@ -101,12 +113,12 @@ def prepare_cpp(cpp_std, file_path, grader_path, exe_path):
     validate_path(file_path)
 
     if not os.path.exists(exe_path):
-        print(f'Compile : {file_path}')
+        atomic_print(f'Compile : {file_path}')
         do_cpp(cpp_std, file_path, grader_path, exe_path)
         return
 
     if need_update(file_path, exe_path):
-        print(f'Recompile : {file_path}')
+        atomic_print(f'Recompile : {file_path}')
         do_cpp(cpp_std, file_path, grader_path, exe_path)
 
 
@@ -119,12 +131,12 @@ def prepare_python(file_path, exe_path):
     validate_path(file_path)
 
     if not os.path.exists(exe_path):
-        print(f'Copy : {file_path}')
+        atomic_print(f'Copy : {file_path}')
         shutil.copyfile(file_path, exe_path)
         return
 
     if need_update(file_path, exe_path):
-        print(f'Recopy : {file_path}')
+        atomic_print(f'Recopy : {file_path}')
         shutil.copyfile(file_path, exe_path)
 
 
@@ -142,11 +154,25 @@ def prepare(config_file):
         os.mkdir(SAVE_TEST_PATH)
     read_config(config_file)
 
-    prepare_runnable(CHECKER, '', 'checker')
-    prepare_runnable(GENERATOR, '', 'generator')
-    prepare_runnable(SMART, GRADER, 'smart')
-    prepare_runnable(STUPID, GRADER, 'stupid')
+    checker_runner = threading.Thread(target=prepare_runnable, args=(CHECKER, '', 'checker'))
+    generator_runner = threading.Thread(target=prepare_runnable, args=(GENERATOR, '', 'generator'))
+    smart_runner = threading.Thread(target=prepare_runnable, args=(SMART, GRADER, 'smart'))
+    stupid_runner = threading.Thread(target=prepare_runnable, args=(STUPID, GRADER, 'stupid'))
 
+    all_runners = [
+        checker_runner,
+        generator_runner,
+        smart_runner,
+        stupid_runner
+    ]
+
+    for runner in all_runners:
+        if not runner.is_alive():
+            runner.start()
+
+    for runner in all_runners:
+        if runner.is_alive():
+            runner.join()
 
 def get_executable(exe_path):
     return exe_path
@@ -220,7 +246,7 @@ def to_ms(time):
 
 
 def log(buffer, line, end=''):
-    print(line, end=end)
+    atomic_print(line, end=end)
     buffer.append(line + end)
 
 
@@ -230,45 +256,88 @@ def log_block(buffer, name, file_path, time):
     log(buffer, f'\nTime: {to_ms(time)}', '\n')
 
 
-def stress():
-    step_counter = 0
-    print('Start stressing')
-    print(global_divider)
-    for i in range(1, COUNT + 1):
-        step_counter += 1
-        if step_counter == STEP:
-            print('Running test', i)
-            step_counter = 0
+test_counter = Value('i', 1)
+test_found = Value('b', False)
 
-        gen_time = gen_input(INPUT_FILE)
-        smart_time = run_smart(INPUT_FILE, SMART_ANS)
-        stupid_time = run_stupid(INPUT_FILE, STUPID_ANS)
-        checker_time = run_checker(SMART_ANS, STUPID_ANS, RESULT_FILE, ERROR_FILE)
+def stress_worker(worker_id):
+    directory = f'{TEMP_PATH}worker_{worker_id}/'
+    worker_input_file = f'{directory}{INPUT_FILE}'
+    worker_smart_ans = f'{directory}{SMART_ANS}'
+    worker_stupid_ans = f'{directory}{STUPID_ANS}'
+    worker_result_file = f'{directory}{RESULT_FILE}'
+    worker_error_file = f'{directory}{ERROR_FILE}'
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    while True:
+        if test_found.value:
+            break
+        with test_counter.get_lock():
+            if test_counter.value > COUNT:
+                break
+            test_num = test_counter.value
+            test_counter.value += 1
 
-        result = open(RESULT_FILE).read().strip()
+        if test_num % STEP == 0:
+            atomic_print(f'Worker {worker_id} running test {test_num}')
+
+        gen_time = gen_input(worker_input_file)
+        smart_time = run_smart(worker_input_file, worker_smart_ans)
+        stupid_time = run_stupid(worker_input_file, worker_stupid_ans)
+        checker_time = run_checker(worker_smart_ans, worker_stupid_ans, worker_result_file, worker_error_file)
+
+        result = open(worker_result_file).read().strip()
 
         if result == 'ERROR':
-            error('Checker error:\n' + open(ERROR_FILE).read())
+            with test_found.get_lock():
+                if not test_found.value:
+                    atomic_print(f'Worker {worker_id} found a test with error', file=sys.stderr)
+                    test_found.value = True
+            break
 
         if result == 'WA':
-            file_name = datetime.datetime.now().strftime('%Y-%m-%d %H\'%M\'%S') + '.txt'
-            buffer = []
+            with test_found.get_lock():
+                if not test_found.value:
+                    test_found.value = True
+                    file_name = datetime.datetime.now().strftime('%Y-%m-%d %H\'%M\'%S') + '.txt'
+                    buffer = []
 
-            log(buffer, global_divider, '\n')
-            log_block(buffer, 'Checker message:', ERROR_FILE, checker_time)
-            log(buffer, local_divider, '\n')
-            log_block(buffer, 'Input:', INPUT_FILE, gen_time)
-            log(buffer, local_divider, '\n')
-            log_block(buffer, 'Stupid answer:', STUPID_ANS, stupid_time)
-            log(buffer, local_divider, '\n')
-            log_block(buffer, 'Smart answer:', SMART_ANS, smart_time)
-            log(buffer, global_divider, '\n')
+                    log(buffer, global_divider, '\n')
+                    log_block(buffer, 'Checker message:', worker_error_file, checker_time)
+                    log(buffer, local_divider, '\n')
+                    log_block(buffer, 'Input:', worker_input_file, gen_time)
+                    log(buffer, local_divider, '\n')
+                    log_block(buffer, 'Stupid answer:', worker_stupid_ans, stupid_time)
+                    log(buffer, local_divider, '\n')
+                    log_block(buffer, 'Smart answer:', worker_smart_ans, smart_time)
+                    log(buffer, global_divider, '\n')
 
-            open(f'{SAVE_TEST_PATH}/{file_name}', 'w').write(''.join(buffer))
-            sys.exit()
-    print('All tests passed')
+                    open(f'{SAVE_TEST_PATH}/{file_name}', 'w').write(''.join(buffer))
+            break
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+    return
 
+def stress():
+    atomic_print('Start stressing')
+    atomic_print(global_divider)
+
+    workers = []
+    for i in range(THREADS):
+        worker = threading.Thread(target=stress_worker, args=(i,))
+        workers.append(worker)
+        worker.start()
+
+    for worker in workers:
+        worker.join()
+
+    if test_found.value:
+        atomic_print('Test found with WA or ERROR')
+    else :
+        atomic_print('All workers finished')
 
 def main(config_file):
+    start_time = timeit.default_timer()
     prepare(config_file)
     stress()
+    end_time = timeit.default_timer()
+    atomic_print(f'Total time: {to_ms(end_time - start_time)}')
