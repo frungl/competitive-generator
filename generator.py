@@ -44,13 +44,15 @@ def delete_from_cmake(problem_name):
 
 def init_problem(problem_name):
     ignored_problem_name = ['CMakeLists.txt', 'debug.h']
+    full_rename = ['smart.cpp', 'input.in']
     os.mkdir(problem_name)
     for file_name, file_content in default_files:
         current_content = file_content.copy()
         current_content = [line.replace('PROBLEM_NAME', problem_name) for line in current_content]
         current_name = file_name
-        if file_name == 'smart.cpp':
-            current_name = f'{problem_name}.cpp'
+        if file_name in full_rename:
+            extension = file_name.split('.')[-1]
+            current_name = f'{problem_name}.{extension}'
         elif file_name not in ignored_problem_name:
             current_name = f'{problem_name}-{file_name}'
         open(fr'{problem_name}/{current_name}', 'w').writelines(current_content)
