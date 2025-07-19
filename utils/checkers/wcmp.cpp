@@ -25,18 +25,18 @@ int main(int argc, char *argv[]) {
         tokenNumber++;
         if (s1 != s2) {
             std::cout << "WA";
-            std::cerr << "Error: line " << tokenNumber << ", expected " << s1 << ", found " << s2 << std::endl;
+            std::cerr << "Error: token " << tokenNumber << ", expected " << s1 << ", found " << s2 << std::endl;
             return 0;
         }
     }
     if (stupid >> s1) {
         std::cout << "WA";
-        std::cerr << "Error: line " << tokenNumber + 1 << ", expected " << s1 << ", found nothing" << std::endl;
+        std::cerr << "Error: token " << tokenNumber + 1 << ", expected " << s1 << ", found nothing" << std::endl;
         return 0;
     }
     if (smart >> s2) {
         std::cout << "WA";
-        std::cerr << "Error: line " << tokenNumber + 1 << ", expected nothing, found " << s2 << std::endl;
+        std::cerr << "Error: token " << tokenNumber + 1 << ", expected nothing, found " << s2 << std::endl;
         return 0;
     }
     std::cout << "OK";
