@@ -69,7 +69,7 @@ def read_config(config_file):
                 SMART = value
             case 'stupid':
                 STUPID = value
-            case 'grader':
+            case 'grader17':
                 GRADER = value
             case 'checker':
                 if value in cfg.checkers:
